@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿// Dolver2D.computeにアタッチしている模様
+using UnityEngine;
 
 namespace StableFluid
 {

@@ -1,4 +1,5 @@
-﻿Shader "StableFluid/Sample"
+﻿// 単純に表示するだけ。外力を他で計算してここに描画する。
+Shader "StableFluid/Sample"
 {
 	Properties
 	{

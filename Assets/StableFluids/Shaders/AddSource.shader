@@ -34,8 +34,12 @@
 			}
 			
 			float4 frag (v2f i) : SV_Target {
+				// _Source,_Radius自体はマテリアルで設定
+				// _Radiusを大きくして影響範囲を大きくする
 				float2 dpdt = (i.uv - _Source.zw) / _Radius;
-				return float4(_Source.xy * saturate(1.0 - dot(dpdt, dpdt)), saturate(1.0 - dot(dpdt, dpdt)), 0);
+				// saturetaは引数の値を0~1に制限する
+				// dorで2ベクトルの内積を求める
+				return float4(_Source.xy * saturate(1.0 - dpdt), saturate(1.0 -  dpdt), 0);
 			}
 			ENDCG
 		}
