@@ -1,4 +1,10 @@
-﻿// Each #kernel tells which function to compile; you can have many kernels
+// 実際に計算する
+// 発散が0なので移流項は無視している？
+// 一般解から圧力項を無視して速度場と密度場でそれぞれ同じような計算をしている模様
+// https://ja.wikipedia.org/wiki/%E3%83%8A%E3%83%93%E3%82%A8%E2%80%93%E3%82%B9%E3%83%88%E3%83%BC%E3%82%AF%E3%82%B9%E6%96%B9%E7%A8%8B%E5%BC%8F
+// 密度場と速度場の違いは
+// ベクトルがスカラーになっている点、動粘性係数が拡散係数になっている、質量保存則を用いない点のみ
+// Each #kernel tells which function to compile; you can have many kernels
 #pragma kernel AddSourceDensity
 #pragma kernel DiffuseDensity
 #pragma kernel AdvectDensity
@@ -98,6 +104,9 @@ void AddSourceDensity(uint2 id : SV_DispatchThreadID)
     }
 }
 
+// 4.6.4
+// 外部からのベクトルを加算する
+// velocityがRWTexture2D型でテクスチャ全体の値を持っていてそこに加算している模様
 //速度場外力項.
 [numthreads(THREAD_X, THREAD_Y, THREAD_Z)]
 void AddSourceVelocity(uint2 id : SV_DispatchThreadID)
@@ -131,7 +140,10 @@ void DiffuseDensity(uint2 id : SV_DispatchThreadID)
     }
 }
 
+//4.6.5
 //速度場拡散(粘性)項.visc∇･∇velocityによる勾配・発散をGauss-Seidel法にて計算。viscはkinematic visocity(動粘性摩擦係数).
+//式を自セルに対する未知数からなる線形方程式に変換し算出された値をすぐに次の反復に使い連鎖させることで近似の答えに収束させるらしい（わからん！）
+
 [numthreads(THREAD_X, THREAD_Y, THREAD_Z)]
 void DiffuseVelocity(uint2 id : SV_DispatchThreadID)
 {
@@ -226,7 +238,9 @@ void AdvectDensityFromExt(uint2 id : SV_DispatchThreadID)
     }
 }
 
+// 4.6.7
 //速度場移流項.
+// 1ステップ前の速度場のバックトレースを行い、該当セルから速度ベクトルを引いた箇所の値を現在いる場所に移動する
 [numthreads(THREAD_X, THREAD_Y, THREAD_Z)]
 void AdvectVelocity(uint2 id : SV_DispatchThreadID)
 {
@@ -278,6 +292,7 @@ void SwapDensity(uint2 id : SV_DispatchThreadID)
     }
 }
 
+
 [numthreads(THREAD_X, THREAD_Y, THREAD_Z)]
 void SwapVelocity(uint2 id : SV_DispatchThreadID)
 {
@@ -292,6 +307,7 @@ void SwapVelocity(uint2 id : SV_DispatchThreadID)
     }
 }
 
+// 4.6.6 質量保存
 //非圧縮性流体の為、速度divergenceの流出入を∇･u = 0にする外圧pを求め、速度場に投影.
 //質量保存Step1.
 //step1では、速度場から発散の算出.
@@ -340,6 +356,7 @@ void ProjectStep2(uint2 id : SV_DispatchThreadID)
 
 //質量保存Step3.
 //step3で、∇･u = 0にする.
+//速度場に減産されて質量保存される
 [numthreads(THREAD_X, THREAD_Y, THREAD_Z)]
 void ProjectStep3(uint2 id : SV_DispatchThreadID)
 {
